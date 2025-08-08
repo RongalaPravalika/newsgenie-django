@@ -1,0 +1,20 @@
+{% extends 'news/base.html' %}
+{% block title %}Scraper Result{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">🧹 Scraping Status</h2>
+    {% if new_articles %}
+        <div class="alert alert-success">
+            ✅ <strong>{{ new_articles|length }}</strong> new articles fetched successfully.
+        </div>
+        <ul class="list-group">
+            {% for article in new_articles %}
+                <li class="list-group-item">{{ article.title }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-warning">⚠️ No new articles were added.</div>
+    {% endif %}
+</div>
+{% endblock %}

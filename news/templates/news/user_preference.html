@@ -1,0 +1,38 @@
+{% extends 'news/base.html' %}
+{% load static %}
+
+{% block title %}Set Your Preferences{% endblock %}
+
+{% block content %}
+<div class="user-preferences-container text-center app-card mt-5">
+    <div class="page-header-section">
+        <h1 class="page-title-heading">Set Your Preferences</h1>
+        <p class="page-subtitle-text">Choose your favorite categories to get personalized recommendations.</p>
+    </div>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="preference-grid-container">
+            <div class="row g-4 justify-content-center">
+                {% for checkbox in form.preferred_categories %}
+                <div class="col-6 col-md-4">
+                    <label class="preference-card-label" for="{{ checkbox.id_for_label }}">
+                        {{ checkbox.tag }}
+                        <div class="preference-card">
+                            <span class="preference-card-text">{{ checkbox.choice_label }}</span>
+                            <div class="checkmark-overlay">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="mt-5">
+            <button type="submit" class="btn app-btn primary-btn btn-lg"><i class="bi bi-save me-2"></i> Save Preferences</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

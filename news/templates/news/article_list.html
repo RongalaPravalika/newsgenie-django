@@ -1,0 +1,304 @@
+{% extends 'news/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Latest NewsGenie Articles{% endblock %}
+
+{% block content %}
+<div class="page-header-section text-center mb-5">
+    <h1 class="page-title-heading">Latest NewsGenie Articles</h1>
+    <p class="page-subtitle-text">Stay informed with AI-powered summaries.</p>
+</div>
+{% if spotlight_article %}
+<div class="spotlight-container mb-5">
+    <div class="spotlight-badge"><i class="bi bi-star-fill"></i> Article of the Week</div>
+    <div class="app-card article-card spotlight-card">
+        <div class="card-body d-flex flex-column">
+            <h3 class="card-title-article spotlight-title">{{ spotlight_article.title }}</h3>
+            <div class="card-meta-info">
+                <span>By {{ spotlight_article.author }} on {{ spotlight_article.published_at|date:"F d, Y" }}</span>
+                <span class="reading-time"><i class="bi bi-clock-fill"></i> {{ spotlight_article.reading_time }} min read</span>
+            </div>
+            <p class="card-text-summary">{{ spotlight_article.summary|default:spotlight_article.content|truncatechars:200 }}</p>
+            <div class="article-actions">
+                <a href="{% url 'news:detail' spotlight_article.pk %}" class="btn app-btn read-more-btn">Read Full Story</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="advanced-filter-sort-container app-card mb-5">
+    <form method="GET" action="{% url 'news:article_list' %}" class="filter-sort-form">
+        <div class="row g-3">
+            <div class="col-12">
+                <label for="searchInput" class="form-label-custom">Keyword Search:</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" id="searchInput" class="form-control app-input-field" placeholder="Search by title or content..." value="{{ search_query }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="collapse" id="additionalFilters">
+            <hr class="my-4 section-divider">
+            
+            <div class="form-group mb-3">
+                <label class="form-label-custom">Category:</label>
+                <div class="category-filter-pills-form">
+                    <a href="?{% url_replace category='All' %}" class="category-filter-pill {% if current_category == 'All' %}active{% endif %}">All</a>
+                    {% for cat in categories %}
+                        <a href="?{% url_replace category=cat.name %}" class="category-filter-pill {% if current_category == cat.name %}active{% endif %}">{{ cat.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <label for="sortBy" class="form-label-custom">Sort By:</label>
+                    <select name="sort_by" id="sortBy" class="form-select app-input-field">
+                        <option value="-published_at" {% if sort_by == '-published_at' %}selected{% endif %}>Most Recent</option>
+                        <option value="published_at" {% if sort_by == 'published_at' %}selected{% endif %}>Oldest</option>
+                        <option value="most_popular_likes" {% if sort_by == 'most_popular_likes' %}selected{% endif %}>Most Popular (Likes)</option>
+                        <option value="most_popular_comments" {% if sort_by == 'most_popular_comments' %}selected{% endif %}>Most Popular (Comments)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="startDate" class="form-label-custom">Date Range (From):</label>
+                    <input type="date" name="start_date" id="startDate" class="form-control app-input-field" value="{{ start_date }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="endDate" class="form-label-custom">Date Range (To):</label>
+                    <input type="date" name="end_date" id="endDate" class="form-control app-input-field" value="{{ end_date }}">
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="minLikes" class="form-label-custom">Min. Likes:</label>
+                    <input type="number" name="min_likes" id="minLikes" class="form-control app-input-field" placeholder="e.g., 5" value="{{ min_likes }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="minComments" class="form-label-custom">Min. Comments:</label>
+                    <input type="number" name="min_comments" id="minComments" class="form-control app-input-field" placeholder="e.g., 3" value="{{ min_comments }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 d-flex flex-wrap justify-content-center gap-2">
+            <button type="submit" class="btn app-btn primary-btn"><i class="bi bi-search me-2"></i> Apply Filters</button>
+            <button class="btn app-btn secondary-btn" type="button" data-bs-toggle="collapse" data-bs-target="#additionalFilters" aria-expanded="false" aria-controls="additionalFilters">
+                <i class="bi bi-sliders me-2"></i> Additional Filters
+            </button>
+            <a href="{% url 'news:article_list' %}" class="btn app-btn outline-btn"><i class="bi bi-x-circle me-2"></i> Clear Filters</a>
+        </div>
+    </form>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 article-grid">
+    {% for article in articles %}
+    <div class="col">
+        <div class="app-card article-card h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title-article">{{ article.title }}</h5>
+                <div class="card-meta-info">
+                    <span>By {{ article.author }} on {{ article.published_at|date:"F d, Y" }}</span>
+                    <span class="reading-time"><i class="bi bi-clock-fill"></i> {{ article.reading_time }} min read</span>
+                </div>
+                <p class="card-text-summary">{{ article.summary|default:article.content|truncatechars:150 }}</p>
+                
+                <div class="article-actions">
+                    <a href="{% url 'news:detail' article.pk %}" class="btn app-btn read-more-btn">Read More</a>
+                    <div class="d-flex gap-2 button-group-actions">
+                        <button class="btn app-btn icon-btn like-btn {% if article.is_liked_by_user %}liked{% endif %}" data-article-id="{{ article.pk }}" {% if not user.is_authenticated %}disabled title="Login to like" {% endif %}>
+                            <i class="bi {% if article.is_liked_by_user %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                            <span class="like-count">{{ article.total_likes }}</span>
+                        </button>
+                        <button class="btn app-btn icon-btn bookmark-btn {% if article.is_bookmarked_by_user %}bookmarked{% endif %}" data-article-id="{{ article.pk }}" {% if not user.is_authenticated %}disabled title="Login to bookmark" {% endif %}>
+                            <i class="bi {% if article.is_bookmarked_by_user %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer article-card-footer">
+                {% for category in article.category.all %}
+                    <span class="badge category-pill-small me-1">{{ category.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <p class="lead">No articles found matching your criteria.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% if articles.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-5">
+    <ul class="pagination justify-content-center app-pagination">
+        {% if articles.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% url_replace page=articles.previous_page_number %}">Previous</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for i in articles.paginator.page_range %}
+            {% if articles.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% url_replace page=i %}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if articles.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% url_replace page=articles.next_page_number %}">Next</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Article Liking Logic ---
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = `toast align-items-center text-white bg-${type} border-0 fade show position-fixed bottom-0 end-0 m-3`;
+            toastContainer.setAttribute('role', 'alert');
+            toastContainer.setAttribute('aria-live', 'assertive');
+            toastContainer.setAttribute('aria-atomic', 'true');
+
+            toastContainer.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            document.body.appendChild(toastContainer);
+
+            const bsToast = new bootstrap.Toast(toastContainer);
+            bsToast.show();
+
+            setTimeout(() => {
+                bsToast.hide();
+                toastContainer.addEventListener('hidden.bs.toast', () => {
+                    toastContainer.remove();
+                });
+            }, 3000);
+        }
+
+        const likeButtons = document.querySelectorAll('.like-btn');
+        likeButtons.forEach(button => {
+            if (!button.disabled) {
+                button.addEventListener('click', function() {
+                    const articleId = this.dataset.articleId;
+                    const likeIcon = this.querySelector('i');
+                    const likeCountSpan = this.querySelector('.like-count');
+                    
+                    fetch(`/article/${articleId}/like-toggle/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            if (data.is_liked) {
+                                likeIcon.classList.remove('bi-heart');
+                                likeIcon.classList.add('bi-heart-fill');
+                                button.classList.add('liked');
+                            } else {
+                                likeIcon.classList.remove('bi-heart-fill');
+                                likeIcon.classList.add('bi-heart');
+                                button.classList.remove('liked');
+                            }
+                            likeCountSpan.textContent = data.total_likes;
+                            showToast(data.message, 'info');
+                        } else {
+                            showToast(data.message || 'Failed to update like status.', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error toggling like:', error);
+                        showToast('An error occurred while toggling like.', 'danger');
+                    });
+                });
+            }
+        });
+
+        const bookmarkButtons = document.querySelectorAll('.bookmark-btn');
+        bookmarkButtons.forEach(button => {
+            if (!button.disabled) {
+                button.addEventListener('click', function() {
+                    const articleId = this.dataset.articleId;
+                    const bookmarkIcon = this.querySelector('i');
+                    
+                    fetch(`/article/${articleId}/bookmark-toggle/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            if (data.is_bookmarked) {
+                                bookmarkIcon.classList.remove('bi-bookmark');
+                                bookmarkIcon.classList.add('bi-bookmark-fill');
+                                button.classList.add('bookmarked');
+                            } else {
+                                bookmarkIcon.classList.remove('bi-bookmark-fill');
+                                bookmarkIcon.classList.add('bi-bookmark');
+                                button.classList.remove('bookmarked');
+                            }
+                            showToast(data.message, 'info');
+                        } else {
+                            showToast(data.message || 'Failed to update bookmark status.', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error toggling bookmark:', error);
+                        showToast('An error occurred while toggling bookmark.', 'danger');
+                    });
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}
