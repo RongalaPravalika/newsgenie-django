@@ -6,7 +6,7 @@ from django.db.models import Q, Count
 # THIS LINE IS FIXED: I have removed the broken 'Profile' import.
 from .models import Article, Category, UserPreference, ReadingHistory, SummaryFeedback, ArticleLike, Bookmark, Comment, UserArticleMetrics
 from .forms import UserPreferenceForm, SummaryFeedbackForm, CommentForm
-from news.utils.scraper import fetch_articles, generate_audio_summary, generate_summary, get_full_article_text
+from news.utils.scraper import fetch_articles, get_full_article_text, get_summary_from_gemini, generate_audio_summary
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_POST
@@ -37,7 +37,8 @@ def article_list(request):
     min_comments_str = request.GET.get("min_comments")
     sort_by = request.GET.get("sort_by", "-published_at")
 
-    articles = Article.objects.filter(approved=True)
+    # THIS IS THE CORRECTED LINE
+    articles = Article.objects.all()
 
     if category_filter and category_filter != "All":
         articles = articles.filter(category__name__iexact=category_filter)
@@ -141,7 +142,7 @@ class GenerateAudioAPIView(APIView):
     def post(self, request, pk, format=None):
         article = get_object_or_404(Article, pk=pk)
         if not article.summary:
-            summary_text = generate_summary(article.content)
+            summary_text = get_summary_from_gemini(article.content)
             if summary_text:
                 article.summary = summary_text
                 article.save()
